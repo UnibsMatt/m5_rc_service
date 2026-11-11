@@ -1,0 +1,45 @@
+# Contributor:
+# Maintainer:
+pkgname=gw-monitor
+pkgver=0.1.0
+pkgrel=0
+pkgdesc="Gateway CPU/mem/disk/IP monitor with ISS MQTT device counter (log/mqtt/api connectors)"
+url="https://localhost/gw-monitor"
+arch="all"
+license="MIT"
+depends="ca-certificates-bundle"
+makedepends="cargo cargo-auditable"
+install="$pkgname.pre-install $pkgname.post-install $pkgname.post-upgrade $pkgname.pre-deinstall"
+options="net"   # cargo fetches crates in prepare()
+source="$pkgname-$pkgver.tar.gz
+	$pkgname.initd
+	$pkgname.confd
+	$pkgname.logrotate
+	"
+builddir="$srcdir/$pkgname-$pkgver"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --release --frozen
+}
+
+package() {
+	install -Dm755 target/release/$pkgname "$pkgdir"/usr/bin/$pkgname
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm640 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.logrotate "$pkgdir"/etc/logrotate.d/$pkgname
+}
+sha512sums="
+56815d0ef4100716d026324789810278b8b178cb9e8165d1e7ae82e5c68333109d5938f78c7beb49283bed539add66ad74af5bf6439013c26cef2d36a0f26cab  gw-monitor-0.1.0.tar.gz
+4c55d02dc1bb80c25e8ea65c43bda0d373dfd16e4e81046b6e2c50e9335bb1f5c966cc51948d28af95b86bffcc6e77b266546ef87cae33bc372f5828d893a385  gw-monitor.initd
+f58950ccb6d463bea0eebdb989ac7b643dedd455c645abeb1063029f2086b0c4c7db443292188514d52dec900dae4945feeeed87a720f0790c84c54e7c4af8b2  gw-monitor.confd
+3c66ecb4c5911d1286789940dc5b7eac69daee6a964efc86cb6fbf2e6928a7ea181de71a84ba511193c103266e098aef0054d0f01958f6a7e3c903d467c96494  gw-monitor.logrotate
+"

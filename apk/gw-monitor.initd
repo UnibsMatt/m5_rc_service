@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+# OpenRC service for gw-monitor. Settings: /etc/conf.d/gw-monitor
+
+name="gw-monitor"
+description="Gateway metrics + ISS device counter (log/mqtt/api connectors)"
+
+supervisor=supervise-daemon
+command="/usr/bin/gw-monitor"
+command_user="gwmon:gwmon"
+output_log="/var/log/gw-monitor.log"
+error_log="/var/log/gw-monitor.log"
+respawn_delay=5
+respawn_max=0
+
+depend() {
+	use net dns logger
+	# broker runs in docker on the gateway; correct clock needed for TLS
+	after firewall docker mosquitto ntpd chronyd
+}
+
+start_pre() {
+	checkpath -f -m 0640 -o gwmon:gwmon /var/log/gw-monitor.log
+	if [ "${CONNECTORS#*api}" != "$CONNECTORS" ]; then
+		for f in "${API_CLIENT_CERT:-/dev/shm/client.crt}" "${API_CLIENT_KEY:-/dev/shm/client.key}"; do
+			[ -e "$f" ] || ewarn "$f missing - api connector will wait for it"
+		done
+		[ -n "$API_URL" ] || ewarn "api connector listed but API_URL is empty - it stays disabled"
+	fi
+}

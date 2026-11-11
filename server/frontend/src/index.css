@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Design tokens (light). Dark values below are selected per token, not auto-flipped. */
+@theme {
+  --color-page: #f9f9f7;
+  --color-surface: #fcfcfb;
+  --color-raised: #ffffff;
+  --color-ink: #0b0b0b;
+  --color-ink-2: #52514e;
+  --color-ink-3: #74736e;
+  --color-line: #e4e3df;
+  --color-grid: #ecebe7;
+  --color-series: #2a78d6;
+  --color-good: #0ca30c;
+  --color-warning: #fab219;
+  --color-serious: #ec835a;
+  --color-critical: #d03b3b;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-page: #0d0d0d;
+    --color-surface: #1a1a19;
+    --color-raised: #222221;
+    --color-ink: #f0efec;
+    --color-ink-2: #c3c2b7;
+    --color-ink-3: #9a998f;
+    --color-line: #383835;
+    --color-grid: #2a2a28;
+    --color-series: #3987e5;
+  }
+}
+
+html { color-scheme: light dark; }
+body { @apply bg-page text-ink font-sans antialiased; }
+.tabular { font-variant-numeric: tabular-nums; }

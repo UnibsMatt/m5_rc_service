@@ -1,0 +1,9 @@
+/var/log/gw-monitor.log {
+	weekly
+	rotate 4
+	maxsize 5M
+	compress
+	missingok
+	notifempty
+	copytruncate
+}

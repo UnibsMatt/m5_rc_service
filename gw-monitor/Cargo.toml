@@ -1,0 +1,23 @@
+[package]
+name = "gw-monitor"
+version = "0.1.0"
+edition = "2024"
+description = "Gateway metrics + ISS device counter with log/mqtt/api connectors"
+license = "MIT"
+
+[dependencies]
+if-addrs = "0.15.0"
+libc = "0.2.191"
+rumqttc = { version = "0.25.1", default-features = false }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-pki-types = { version = "1.16.0", features = ["std"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+ureq = { version = "2", default-features = false, features = ["tls"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

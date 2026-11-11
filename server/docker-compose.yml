@@ -1,0 +1,47 @@
+name: gw-fleet
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gwfleet}
+      POSTGRES_USER: ${POSTGRES_USER:-gwfleet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    image: gw-fleet-api:0.1.0
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gwfleet}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-gwfleet}
+      CLIENT_CERT_POLICY: ${CLIENT_CERT_POLICY:-verified}
+      CN_MATCH: ${CN_MATCH:-warn}
+      ONLINE_AFTER_SECS: ${ONLINE_AFTER_SECS:-90}
+      RETENTION_DAYS: ${RETENTION_DAYS:-14}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    image: gw-fleet-web:0.1.0
+    ports:
+      - "${WEB_PORT:-8090}:8080"       # dashboard
+      - "${INGEST_PORT:-8443}:8443"    # gw-monitor api connector (mTLS)
+    volumes:
+      - ./certs:/certs:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

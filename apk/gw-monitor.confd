@@ -1,0 +1,40 @@
+# /etc/conf.d/gw-monitor - environment for the gw-monitor service.
+# Apply changes with:  rc-service gw-monitor restart
+# Variables must be exported to reach the daemon.
+
+# ---- output connectors: any of log,mqtt,api ---------------------------------
+export CONNECTORS="log,mqtt"
+# Identity in reports. Empty = CN of API_CLIENT_CERT (e.g. pc-94px994), else hostname.
+export GATEWAY_ID=""
+export INTERVAL_SECS="30"
+
+# ---- MQTT broker (input: ISS device count, output: mqtt connector) ----------
+export MQTT_HOST="127.0.0.1"
+export MQTT_PORT="31883"
+export MQTT_USER="iss"
+export MQTT_PASS='iss123.'
+export MQTT_CLIENT_ID=""            # empty = gw-monitor-<hostname>; must be unique
+export MQTT_MAX_PACKET="1048576"    # max incoming payload (bytes), debug msgs can be big
+# Topics to count devices on; the '+' level holds the MAC (e.g. /ISS/8A:8D:04:43:3A:10/debug)
+export ISS_TOPICS="/ISS/+/data,/ISS/+/debug"
+# 0 = count every MAC ever seen since start; N = only MACs seen in the last N seconds
+export DEVICE_TTL_SECS="0"
+# mqtt connector: retained JSON report (keep it outside /ISS/)
+export PUBLISH_TOPIC="gateway/status"
+
+# ---- api connector (HTTPS POST, mutual TLS) ---------------------------------
+# To enable: set API_URL and add ",api" to CONNECTORS.
+export API_URL=""
+export API_METHOD="POST"
+export API_CLIENT_CERT="/dev/shm/client.crt"
+export API_CLIENT_KEY="/dev/shm/client.key"
+export API_CA_FILE=""               # iotplt Root CA (PEM) - required for a private-CA server
+export API_TOKEN=""                 # optional "Authorization: Bearer" token
+export API_HEADERS=""               # optional extra headers: "X-Site=plant1;X-Foo=bar"
+export API_TIMEOUT_SECS="10"
+export API_RETRIES="3"
+export API_QUEUE_MAX="100"          # reports buffered in RAM while the API is unreachable
+
+# ---- metrics -----------------------------------------------------------------
+export IFACE=""                     # empty = all interfaces, or e.g. "br0,tun0"
+export DISK_MOUNTS="/"              # comma separated mount points

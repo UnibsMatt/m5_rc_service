@@ -1,0 +1,7 @@
+#!/bin/sh
+rc-update add gw-monitor default >/dev/null 2>&1
+# Only start when OpenRC is actually running (not in a chroot/image build/container).
+if [ -e /run/openrc/softlevel ]; then
+	rc-service gw-monitor start || echo "gw-monitor: start failed, see /var/log/gw-monitor.log" >&2
+fi
+exit 0

@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ -e /run/openrc/softlevel ]; then
+	rc-service gw-monitor --ifstarted restart || true
+fi
+exit 0
