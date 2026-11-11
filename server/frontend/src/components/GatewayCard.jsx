@@ -1,8 +1,16 @@
 import { ago } from "../format.js";
 import { Flag, Meter, OnlineBadge, flagsFor } from "./Status.jsx";
 
+// Container/virtual bridges are rarely the address you want to reach the gateway on.
+const VIRTUAL = /^(docker|br-|veth|virbr|cni|flannel|cali|kube)/;
+
+function primaryIp(ips) {
+  const v4 = ips.filter((i) => !i.ip.includes(":"));
+  return (v4.find((i) => !VIRTUAL.test(i.iface)) ?? v4[0] ?? ips[0])?.ip;
+}
+
 export default function GatewayCard({ g, onOpen, selected }) {
-  const ip = g.ips.find((i) => !i.ip.includes(":"))?.ip ?? g.ips[0]?.ip;
+  const ip = primaryIp(g.ips);
   const flags = flagsFor(g);
   return (
     <button

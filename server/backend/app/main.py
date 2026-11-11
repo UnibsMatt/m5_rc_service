@@ -130,16 +130,19 @@ async def ingest(report: Report,
     disk_pct = next((d.get("pct") for d in report.disks if d.get("mount") == "/"),
                     report.disks[0].get("pct") if report.disks else None)
     ts = datetime.fromtimestamp(report.ts, tz=timezone.utc)
+    now = datetime.now(timezone.utc)
+    # A report backfilled from the gateway's queue proves presence at its own ts, not now.
+    seen = now if (now - ts).total_seconds() <= ONLINE_AFTER_SECS else min(ts, now)
 
     async with pool.connection() as conn, conn.transaction():
         # Queued reports may arrive late/out of order: only a newer ts replaces last_report.
         await conn.execute(
             """
             INSERT INTO gateways (gateway_id, hostname, version, client_cn, client_verify,
-                                  last_ts, last_report)
-            VALUES (%(id)s, %(host)s, %(ver)s, %(cn)s, %(verify)s, %(ts)s, %(p)s)
+                                  last_seen, last_ts, last_report)
+            VALUES (%(id)s, %(host)s, %(ver)s, %(cn)s, %(verify)s, %(seen)s, %(ts)s, %(p)s)
             ON CONFLICT (gateway_id) DO UPDATE SET
-                last_seen = now(),
+                last_seen = GREATEST(gateways.last_seen, EXCLUDED.last_seen),
                 client_cn = EXCLUDED.client_cn,
                 client_verify = EXCLUDED.client_verify,
                 hostname    = CASE WHEN EXCLUDED.last_ts >= gateways.last_ts THEN EXCLUDED.hostname    ELSE gateways.hostname END,
@@ -149,7 +152,7 @@ async def ingest(report: Report,
             """,
             {"id": report.gateway_id, "host": report.hostname, "ver": report.version,
              "cn": x_client_cn or None, "verify": x_client_verify or None,
-             "ts": report.ts, "p": Jsonb(payload)},
+             "seen": seen, "ts": report.ts, "p": Jsonb(payload)},
         )
         # (gateway_id, ts) is unique: a retried report is stored once.
         await conn.execute(

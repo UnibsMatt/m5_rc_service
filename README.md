@@ -17,6 +17,8 @@ m5/
 │       ├── iss.rs         MQTT subscriber, MAC extraction + dedup
 │       ├── cert.rs        client cert CN / expiry (gateway_id, warnings)
 │       └── connectors/    log, mqtt, api (own thread, queue, retry, cert hot-reload)
+├── server/                receiving side for the api connector: FastAPI + Postgres + React dashboard
+│                          (docker compose; see server/README.md)
 └── apk/                   abuild packaging
     ├── APKBUILD
     ├── build.sh           one-shot build → ~/packages/m5/<arch>/gw-monitor-<ver>-r<rel>.apk
